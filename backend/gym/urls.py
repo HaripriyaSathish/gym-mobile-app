@@ -9,6 +9,8 @@ urlpatterns = [
     path("coach/attendance/", coach_views.attendance),
     path("coach/messages/", coach_views.messages),
     path("coach/messages/<int:pk>/", coach_views.message_delete),
+    path("coach/diet/", coach_views.diets),
+    path("coach/diet/<int:pk>/", coach_views.diet_detail),
     path("coach/payments/", coach_views.payments),
     path("coach/payments/<int:pk>/cash/", coach_views.payment_cash),
     path("coach/payments/<int:pk>/remind/", coach_views.payment_remind),

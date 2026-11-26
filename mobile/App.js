@@ -26,6 +26,8 @@ import ProgramScreen from './src/screens/ProgramScreen';
 import RemindersScreen from './src/screens/RemindersScreen';
 import SignUpScreen from './src/screens/SignUpScreen';
 import CoachAttendanceScreen from './src/screens/coach/CoachAttendanceScreen';
+import CoachDietEditorScreen from './src/screens/coach/CoachDietEditorScreen';
+import CoachDietScreen from './src/screens/coach/CoachDietScreen';
 import CoachFeesScreen from './src/screens/coach/CoachFeesScreen';
 import CoachHomeScreen from './src/screens/coach/CoachHomeScreen';
 import CoachMembersScreen from './src/screens/coach/CoachMembersScreen';
@@ -116,7 +118,8 @@ function Root() {
   useEffect(() => {
     if (!token || role !== 'member') return undefined;
     return onNotificationTap((data) => {
-      const go = () => navRef.navigate('Tabs', { screen: data.screen === 'Batch' ? 'Batch' : 'Home' });
+      const go = () => navRef.navigate('Tabs', data.screen === 'Batch'
+        ? { screen: 'Batch', params: { tab: data.tab || 'messages' } } : { screen: 'Home' });
       if (navRef.isReady()) go();
       else setTimeout(go, 800);
     });
@@ -128,7 +131,11 @@ function Root() {
       <NavigationContainer ref={navRef} theme={navTheme} documentTitle={{ formatter: () => 'PulseForge Fitness' }}>
         <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg }, animation: 'slide_from_right' }}>
           {token && role === 'trainer' ? (
-            <Stack.Screen name="Coach" component={CoachTabs} />
+            <>
+              <Stack.Screen name="Coach" component={CoachTabs} />
+              <Stack.Screen name="Diet" component={CoachDietScreen} />
+              <Stack.Screen name="DietEditor" component={CoachDietEditorScreen} />
+            </>
           ) : token ? (
             <>
               <Stack.Screen name="Tabs" component={Tabs} />

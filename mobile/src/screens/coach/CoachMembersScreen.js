@@ -5,7 +5,7 @@ import { Card, DataScreen, Empty, FadeIn, PageHeader, Pill, T, rupee } from '../
 import { useApi } from '../../useApi';
 import { colors, fonts, radius } from '../../theme';
 
-export default function CoachMembersScreen() {
+export default function CoachMembersScreen({ navigation }) {
   const q = useApi('/coach/members/');
   const [search, setSearch] = useState('');
   const [batch, setBatch] = useState('all');
@@ -62,6 +62,10 @@ export default function CoachMembersScreen() {
                   <Pill text={due ? `${rupee(m.dues)} due` : 'Fees clear'} color={due ? colors.red : colors.green} icon="wallet" />
                 </View>
                 {m.goal ? <T.Muted style={{ fontSize: 12, marginTop: 8 }}>🎯 {m.goal}</T.Muted> : null}
+                <Pressable onPress={() => navigation.navigate('Diet', { member: m.id })} style={st.dietBtn}>
+                  <Ionicons name="nutrition-outline" size={15} color={colors.primary} />
+                  <Text style={st.dietText}>Diet plan</Text>
+                </Pressable>
               </Card></FadeIn>
             );
           })}
@@ -82,5 +86,8 @@ const st = StyleSheet.create({
   avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' },
   initial: { fontFamily: fonts.semibold, fontSize: 14, color: colors.primary },
   call: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' },
+  dietBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: 10, paddingHorizontal: 12,
+    paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: colors.primary },
+  dietText: { fontFamily: fonts.semibold, fontSize: 12, color: colors.primary },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
 });

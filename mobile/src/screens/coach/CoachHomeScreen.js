@@ -58,7 +58,7 @@ export default function CoachHomeScreen({ navigation }) {
             <Quick icon="checkmark-done" label="Attendance" color={colors.primary} onPress={() => navigation.navigate('Attendance')} />
             <Quick icon="megaphone" label="Message" color={colors.navy} onPress={() => navigation.navigate('Messages')} />
             <Quick icon="cash" label="Collect fee" color={colors.green} onPress={() => navigation.navigate('Fees')} />
-            <Quick icon="people" label="Members" color={colors.amber} onPress={() => navigation.navigate('Members')} />
+            <Quick icon="nutrition" label="Diet" color={colors.amber} onPress={() => navigation.navigate('Diet')} />
           </FadeIn>
 
           <Section title="Today's schedule">
