@@ -54,29 +54,35 @@ def dashboard(request):
     batches, is_staff = _scope(request)
     if batches is None:
         return _forbidden()
-    absence.mark_all(batches)
     today = date.today()
     month_start = timezone.make_aware(datetime.combine(today.replace(day=1), time.min))
-    members = Member.objects.filter(is_active=True, batch__in=batches)
-    pays = Payment.objects.filter(member__in=members)
-    rows = batches.annotate(
+    rows = list(batches.annotate(  # one query: batches + member / present-today counts
         n=Count("members", filter=Q(members__is_active=True), distinct=True),
         p=Count("members__attendance", filter=Q(members__attendance__date=today,
                                                 members__attendance__status="present"), distinct=True),
-    )
+    ).order_by("start_time"))
+    absence.mark_all(rows)
+    members = Member.objects.filter(is_active=True, batch__in=batches)
+    pays = Payment.objects.filter(member__in=members)
+    att = Attendance.objects.filter(member__in=members, date=today).aggregate(
+        present=Count("id", filter=Q(status="present")), absent=Count("id", filter=Q(status="absent")))
+    fees = pays.aggregate(
+        collected=Sum("amount", filter=Q(status="paid", paid_at__gte=month_start)),
+        pending=Sum("amount", filter=~Q(status="paid")),
+        overdue=Count("id", filter=~Q(status="paid") & Q(due_date__lt=today)))
     u = request.user
     return Response({
         "name": u.get_full_name() or u.username,
         "first_name": u.first_name or u.username,
         "is_staff": is_staff,
         "stats": {
-            "members": members.count(),
-            "batches": batches.count(),
-            "present_today": Attendance.objects.filter(member__in=members, date=today, status="present").count(),
-            "absent_today": Attendance.objects.filter(member__in=members, date=today, status="absent").count(),
-            "collected": str(pays.filter(status="paid", paid_at__gte=month_start).aggregate(s=Sum("amount"))["s"] or 0),
-            "pending": str(pays.exclude(status="paid").aggregate(s=Sum("amount"))["s"] or 0),
-            "overdue": pays.exclude(status="paid").filter(due_date__lt=today).count(),
+            "members": sum(b.n for b in rows),
+            "batches": len(rows),
+            "present_today": att["present"],
+            "absent_today": att["absent"],
+            "collected": str(fees["collected"] or 0),
+            "pending": str(fees["pending"] or 0),
+            "overdue": fees["overdue"],
         },
         "batches": [_batch_json(b, b.n, b.p) for b in rows],
         "overdue": [_payment_json(p) for p in pays.exclude(status="paid").filter(due_date__lt=today)
@@ -84,7 +90,7 @@ def dashboard(request):
         "recent_messages": BatchMessageSerializer(
             BatchMessage.objects.filter(Q(batch__in=batches) | Q(batch__isnull=True)).select_related("batch")[:3],
             many=True).data,
-        **_dashboard_sections(batches, members, today),
+        **_dashboard_sections(rows, members, today),
     })
 
 
@@ -118,11 +124,15 @@ def _dashboard_sections(batches, members, today):
         week.append({"date": d.isoformat(), "label": d.strftime("%a")[:2], "present": c["present"],
                      "absent": c["absent"], "today": d == today})
 
-    # Needs attention: 3+ absences in a row
+    # Needs attention: 3+ absences in a row (one query for everyone's recent records)
+    recent = {}
+    for mid, st in (Attendance.objects.filter(member__in=members, date__gte=today - timedelta(days=30))
+                    .order_by("member_id", "-date").values_list("member_id", "status")):
+        recent.setdefault(mid, []).append(st)
     attention = []
     for m in members.select_related("user", "batch"):
         run = 0
-        for st in m.attendance.order_by("-date").values_list("status", flat=True)[:10]:
+        for st in recent.get(m.id, []):
             if st != "absent":
                 break
             run += 1

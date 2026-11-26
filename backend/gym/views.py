@@ -8,7 +8,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from rest_framework import status
@@ -26,7 +26,13 @@ from .serializers import (AttendanceSerializer, BannerSerializer, BatchMessageSe
 
 
 def _member(request):
-    return getattr(request.user, "member", None)
+    # One query for member + batch + program (instead of one each, later)
+    return (Member.objects.select_related("user", "batch__program").filter(user_id=request.user.id).first()
+            if request.user.is_authenticated else None)
+
+
+def _programs():
+    return Program.objects.annotate(n_batches=Count("batches", filter=Q(batches__is_active=True))).order_by("order", "name")
 
 
 def _no_member():
@@ -133,16 +139,17 @@ def push_register(request):
 
 # ----------------------------------------------------------------- helpers
 
-def attendance_summary(member):
+def attendance_summary(member, recs=None):
+    """Streaks, month counts and today's status, all from one query of the last 90 records."""
     today = date.today()
     start = today.replace(day=1)
-    month = member.attendance.filter(date__gte=start)
-    present = month.filter(status="present").count()
-    absent = month.filter(status="absent").count()
+    if recs is None:
+        recs = list(member.attendance.order_by("-date")[:90])
+    present = sum(1 for r in recs if r.date >= start and r.status == "present")
+    absent = sum(1 for r in recs if r.date >= start and r.status == "absent")
     total = present + absent
     streak = 0
     absent_run = 0
-    recs = list(member.attendance.order_by("-date")[:90])
     for r in recs:
         if r.status == "present":
             streak += 1
@@ -159,7 +166,7 @@ def attendance_summary(member):
         "rate": round(present * 100 / total) if total else 0,
         "streak": streak,
         "consecutive_absent": absent_run,
-        "checked_in_today": member.attendance.filter(date=today, status="present").exists(),
+        "checked_in_today": bool(recs) and recs[0].date == today and recs[0].status == "present",
     }
 
 
@@ -187,9 +194,12 @@ def home(request):
     if not m:
         return _no_member()
     ctx = {"request": request}
-    if m.batch:
-        absence.mark_batch(m.batch)  # session over and no check-in -> absent + missed-workout alert
-    today_rec = m.attendance.filter(date=timezone.localdate()).first()
+    recs = list(m.attendance.order_by("-date")[:90])
+    today_rec = recs[0] if recs and recs[0].date == timezone.localdate() else None
+    if m.batch and not today_rec and absence.mark_batch(m.batch):
+        # session over and no check-in -> just marked absent + missed-workout alert
+        recs = list(m.attendance.order_by("-date")[:90])
+        today_rec = recs[0] if recs and recs[0].date == timezone.localdate() else None
     missed = None
     if today_rec and today_rec.status == "absent" and m.batch:
         missed = {"date": today_rec.date.isoformat(), "batch": m.batch.name,
@@ -198,12 +208,13 @@ def home(request):
     next_due = m.payments.exclude(status="paid").order_by("due_date").first()
     msg = member_messages(m).first()
     diet = member_diets(m).first()
-    featured = MediaItem.objects.filter(featured=True)[:6]
-    programs = Program.objects.all()
+    featured = MediaItem.objects.filter(featured=True).select_related("program")[:6]
+    programs = list(_programs())
+    ctx["programs_by_id"] = {p.id: p for p in programs}
     reminders = member_reminders(m).filter(remind_at__gte=timezone.now() - timedelta(days=3)).order_by("remind_at")[:3]
     return Response({
         "member": MemberSerializer(m, context=ctx).data,
-        "attendance": attendance_summary(m),
+        "attendance": attendance_summary(m, recs),
         "missed_today": missed,
         "next_payment": PaymentSerializer(next_due).data if next_due else None,
         "latest_message": BatchMessageSerializer(msg).data if msg else None,
@@ -308,13 +319,14 @@ def start_payment(request, pk):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def programs(request):
-    return Response(ProgramSerializer(Program.objects.all(), many=True, context={"request": request}).data)
+    return Response(ProgramSerializer(_programs(), many=True, context={"request": request}).data)
 
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def batches(request):
-    qs = Batch.objects.filter(is_active=True).select_related("program")
+    qs = Batch.objects.filter(is_active=True).select_related("program").annotate(
+        n_members=Count("members", filter=Q(members__is_active=True))).order_by("start_time")
     if request.GET.get("program"):
         qs = qs.filter(program__name__iexact=request.GET["program"])
     return Response(BatchSerializer(qs, many=True).data)

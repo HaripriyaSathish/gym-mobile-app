@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { api } from '../api';
 import BannerCarousel from '../components/BannerCarousel';
 import MissedWorkoutAlert from '../components/MissedWorkoutAlert';
+import { warmMember } from '../prefetch';
 import { Brand, Card, DataScreen, FadeIn, Glow, IconCircle, Img, Pill, PulseGlow, Section, Sheen, T, rupee, fmtShort, timeAgo } from '../components/ui';
 import { useApi } from '../useApi';
 import { colors, fonts, gradients, radius, shadow } from '../theme';
@@ -18,6 +19,7 @@ const REM_ICON = { payment: 'card-outline', class: 'barbell-outline', diet: 'nut
 
 export default function HomeScreen({ navigation }) {
   const q = useApi('/home/');
+  useEffect(() => { if (q.data) warmMember(q.data); }, [q.data]);
   const [checking, setChecking] = useState(false);
 
   const checkIn = async () => {

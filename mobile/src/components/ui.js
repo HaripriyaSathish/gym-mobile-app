@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import {
   ActivityIndicator, Animated, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View,
 } from 'react-native';
+import { sized } from '../images';
 import { colors, fonts, gradients, radius, shadow, shadowSm } from '../theme';
 import { FadeIn, Glow, Pop, PulseGlow, Sheen } from './motion';
 
@@ -137,10 +138,11 @@ export function IconCircle({ name, color = colors.primary, size = 42 }) {
   );
 }
 
-export function Img({ uri, style, radius: r = radius.md, children }) {
+/** size: 'sm' for thumbnails/cards, 'md' for wide banners, 'lg' for full-screen heroes (see images.js). */
+export function Img({ uri, style, radius: r = radius.md, children, size = 'sm' }) {
   return (
     <View style={[{ borderRadius: r, overflow: 'hidden', backgroundColor: colors.soft }, style]}>
-      <Image source={{ uri }} style={StyleSheet.absoluteFill} contentFit="cover" transition={250}
+      <Image source={{ uri: sized(uri, size) }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150}
         cachePolicy="memory-disk" />
       {children}
     </View>

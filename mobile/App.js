@@ -81,7 +81,8 @@ function Tabs() {
   return (
     <Tab.Navigator screenOptions={screenOptions}>
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Gallery" component={GalleryScreen} />
+      {/* Built in the background at startup so its photos are ready the first time it is opened */}
+      <Tab.Screen name="Gallery" component={GalleryScreen} options={{ lazy: false }} />
       <Tab.Screen name="Batch" component={BatchScreen} />
       <Tab.Screen name="Pay" component={PaymentsScreen} />
       <Tab.Screen name="Me" component={ProfileScreen} />

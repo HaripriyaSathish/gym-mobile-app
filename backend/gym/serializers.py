@@ -22,12 +22,13 @@ class ProgramSerializer(serializers.ModelSerializer):
         return media_url(self.context.get("request"), obj.image, obj.image_url)
 
     def get_batch_count(self, obj):
-        return obj.batches.filter(is_active=True).count()
+        n = getattr(obj, "n_batches", None)  # annotated by the view (no extra query per program)
+        return n if n is not None else obj.batches.filter(is_active=True).count()
 
 
 class BatchSerializer(serializers.ModelSerializer):
     program = serializers.CharField(source="program.name")
-    member_count = serializers.IntegerField(read_only=True)
+    member_count = serializers.SerializerMethodField()
     start = serializers.SerializerMethodField()
     end = serializers.SerializerMethodField()
 
@@ -35,6 +36,10 @@ class BatchSerializer(serializers.ModelSerializer):
         model = Batch
         fields = ["id", "name", "program", "trainer", "days", "start", "end", "capacity", "member_count",
                   "monthly_fee"]
+
+    def get_member_count(self, obj):
+        n = getattr(obj, "n_members", None)  # annotated by the view (no extra query per batch)
+        return n if n is not None else obj.member_count
 
     def get_start(self, obj):
         return obj.start_time.strftime("%I:%M %p")
@@ -126,7 +131,11 @@ class BannerSerializer(serializers.ModelSerializer):
         return media_url(self.context.get("request"), obj.image, obj.image_url)
 
     def get_program(self, obj):
-        return ProgramSerializer(obj.program, context=self.context).data if obj.program else None
+        if not obj.program_id:
+            return None
+        # Reuse the view's already-annotated programs when available (avoids a count query per banner)
+        program = (self.context.get("programs_by_id") or {}).get(obj.program_id, obj.program)
+        return ProgramSerializer(program, context=self.context).data
 
 
 class MediaItemSerializer(serializers.ModelSerializer):

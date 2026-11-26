@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../auth';
 import { confirm } from '../../confirm';
+import { warmCoach } from '../../prefetch';
 import { Brand, Card, DataScreen, Empty, FadeIn, Glow, IconCircle, Pill, Section, Sheen, T, fmtShort, rupee, timeAgo } from '../../components/ui';
 import { useApi } from '../../useApi';
 import { colors, fonts, gradients, radius } from '../../theme';
@@ -17,6 +18,7 @@ const greet = () => {
 
 export default function CoachHomeScreen({ navigation }) {
   const q = useApi('/coach/dashboard/');
+  useEffect(() => { if (q.data) warmCoach(); }, [q.data]);
   const { signOut } = useAuth();
   const logout = async () => {
     if (await confirm('Sign out?', 'You will need your username and password to sign in again.', 'Sign out')) signOut();

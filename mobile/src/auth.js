@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api, loadToken, setToken, setUnauthorizedHandler } from './api';
+import { resetWarm } from './prefetch';
 import { getPushToken } from './push';
 
 const AuthContext = createContext(null);
@@ -40,6 +41,7 @@ export function AuthProvider({ children }) {
     } catch {}
     await setToken(null);
     await AsyncStorage.removeItem(ROLE_KEY);
+    resetWarm();
     setState({ ready: true, token: null, role: null });
   };
 

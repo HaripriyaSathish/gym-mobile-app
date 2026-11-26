@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { sized } from '../images';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -26,7 +27,7 @@ function Slide({ item, width, active, onPress }) {
     <View style={{ width, paddingHorizontal: 20 }}>
       <View style={st.slide}>
         <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: zoom }] }]}>
-          <Image source={{ uri: item.image }} style={StyleSheet.absoluteFill} contentFit="cover" transition={350}
+          <Image source={{ uri: sized(item.image, 'md') }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200}
             cachePolicy="memory-disk" priority="high" />
         </Animated.View>
         <LinearGradient colors={['rgba(27,35,64,0.05)', 'rgba(27,35,64,0.55)', 'rgba(27,35,64,0.92)']}

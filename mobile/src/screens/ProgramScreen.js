@@ -17,7 +17,7 @@ export default function ProgramScreen({ route, navigation }) {
 
   return (
     <Screen refreshing={batches.refreshing} onRefresh={() => { batches.refresh(); media.refresh(); }}>
-      <Img uri={program.image} style={{ height: 300 }} radius={0}>
+      <Img uri={program.image} style={{ height: 300 }} radius={0} size="lg">
         <LinearGradient colors={gradients.fade} style={StyleSheet.absoluteFill} />
         <Pressable onPress={() => navigation.goBack()} style={st.back} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={colors.navy} />

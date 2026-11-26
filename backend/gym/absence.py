@@ -6,6 +6,7 @@ It runs on its own in two ways, so it doesn't depend on a scheduler being set up
   * on a schedule with `python manage.py mark_absentees` (Windows Task Scheduler / cron), every 15-30 min.
 Running it again is safe: members who already have a record for the day are skipped.
 """
+import time
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -46,14 +47,23 @@ def missed_message(batch):
             "One missed session is fine. Two becomes a habit, so see you next class! 💪")
 
 
+# (batch id, date) -> time it was last fully checked. Screens open often; once a finished session has been
+# settled there is nothing new to mark, so skip the database for a few minutes.
+_settled = {}
+SETTLE_SECONDS = 600
+
+
 def mark_batch(batch, now=None):
     """Mark today's no-shows in one batch. Returns the members marked absent."""
     now = now or timezone.localtime()
     today = now.date()
     if not batch.is_active or not runs_on(batch, today) or not session_over(batch, now):
         return []
-    done = set(Attendance.objects.filter(member__batch=batch, date=today).values_list("member_id", flat=True))
-    missing = list(batch.members.filter(is_active=True, joined_on__lte=today).exclude(id__in=done)
+    key = (batch.id, today)
+    if time.monotonic() - _settled.get(key, -SETTLE_SECONDS) < SETTLE_SECONDS:
+        return []
+    # One query: active members of this batch with no attendance record today
+    missing = list(batch.members.filter(is_active=True, joined_on__lte=today).exclude(attendance__date=today)
                    .select_related("user"))
     marked = []
     for m in missing:
@@ -70,6 +80,7 @@ def mark_batch(batch, now=None):
     if marked and getattr(settings, "AUTO_ABSENT_EMAIL", False):
         services.send_email([services.member_recipient(m) for m in marked], "We missed you today 😢",
                             "You missed today's workout", missed_message(batch))
+    _settled[key] = time.monotonic()
     return marked
 
 

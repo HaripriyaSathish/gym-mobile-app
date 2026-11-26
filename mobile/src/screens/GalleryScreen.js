@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { sized } from '../images';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -82,7 +83,7 @@ export default function GalleryScreen({ navigation, route }) {
           <Pressable style={[StyleSheet.absoluteFill, st.lightbox]} onPress={() => setPreview(null)}>
             {preview ? (
               <View style={{ width: '100%', alignItems: 'center' }}>
-                <Image source={{ uri: preview.image }} style={{ width: '100%', aspectRatio: 0.8, borderRadius: radius.lg }} contentFit="cover" />
+                <Image source={{ uri: sized(preview.image, 'lg') }} placeholder={{ uri: sized(preview.image, 'sm') }} style={{ width: '100%', aspectRatio: 0.8, borderRadius: radius.lg }} contentFit="cover" cachePolicy="memory-disk" />
                 <Text style={[st.progName, { marginTop: 14 }]}>{preview.title}</Text>
                 {preview.description ? <Text style={st.lbDesc}>{preview.description}</Text> : null}
                 <Text style={st.lbClose}>Tap anywhere to close</Text>

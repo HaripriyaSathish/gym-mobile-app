@@ -20,14 +20,34 @@ export function setUnauthorizedHandler(fn) {
 }
 const memoryCache = new Map();
 
+// Last good response for each screen, saved on the device so the app opens with content instantly
+// (then refreshes in the background). Cleared on sign-out / when a different user signs in.
+const CACHE_KEY = 'pf_cache_v1';
+let saveTimer = null;
+function persistSoon() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    AsyncStorage.setItem(CACHE_KEY, JSON.stringify(Object.fromEntries(memoryCache))).catch(() => {});
+  }, 800);
+}
+
 export async function loadToken() {
-  token = await AsyncStorage.getItem('pf_token');
+  const [t, saved] = await Promise.all([AsyncStorage.getItem('pf_token'), AsyncStorage.getItem(CACHE_KEY)]);
+  token = t;
+  try {
+    Object.entries(JSON.parse(saved || '{}')).forEach(([k, v]) => { if (!memoryCache.has(k)) memoryCache.set(k, v); });
+  } catch {}
   return token;
 }
 
 export async function setToken(t) {
+  const changed = t !== token;
   token = t;
-  memoryCache.clear();
+  if (changed) {
+    clearTimeout(saveTimer); // don't let a pending save write the previous user's data back
+    memoryCache.clear();
+    AsyncStorage.removeItem(CACHE_KEY).catch(() => {});
+  }
   if (t) await AsyncStorage.setItem('pf_token', t);
   else await AsyncStorage.removeItem('pf_token');
 }
@@ -52,7 +72,10 @@ export async function api(path, { method = 'GET', body, timeout = 15000 } = {}) 
       err.status = res.status;
       throw err;
     }
-    if (method === 'GET') memoryCache.set(path, data);
+    if (method === 'GET') {
+      memoryCache.set(path, data);
+      persistSoon();
+    }
     return data;
   } catch (e) {
     if (e.name === 'AbortError') throw new Error('Server is taking too long. Check the backend is running.');

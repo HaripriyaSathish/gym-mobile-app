@@ -3,7 +3,8 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { api } from '../api';
+import { api, cached } from '../api';
+import { sized } from '../images';
 import { useAuth } from '../auth';
 import { Brand, Button, FadeIn, T } from '../components/ui';
 import { colors, fonts, radius } from '../theme';
@@ -16,11 +17,12 @@ export default function LoginScreen({ navigation }) {
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [hero, setHero] = useState(null);
+  const pick = (p) => (p?.find((x) => x.name === 'Fitness') || p?.[0])?.image || null;
+  const [hero, setHero] = useState(() => pick(cached('/programs/')));
 
   useEffect(() => {
     // Hero photo comes from the gym's Cloudinary media (public programs endpoint)
-    api('/programs/').then((p) => setHero((p.find((x) => x.name === 'Fitness') || p[0])?.image)).catch(() => {});
+    api('/programs/').then((p) => setHero(pick(p))).catch(() => {});
   }, []);
 
   const submit = async () => {
@@ -39,7 +41,7 @@ export default function LoginScreen({ navigation }) {
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={st.hero}>
-          {hero ? <Image source={{ uri: hero }} style={StyleSheet.absoluteFill} contentFit="cover" transition={400} /> : null}
+          {hero ? <Image source={{ uri: sized(hero, 'md') }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} cachePolicy="memory-disk" priority="high" /> : null}
           <LinearGradient colors={['rgba(255,90,54,0.25)', 'rgba(27,35,64,0.88)']} style={StyleSheet.absoluteFill} />
           <FadeIn style={st.heroContent} distance={24}>
             <Brand size={34} light />
