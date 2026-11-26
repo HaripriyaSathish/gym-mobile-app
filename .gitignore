@@ -1,0 +1,15 @@
+backend/.env
+backend/venv/
+backend/media/members/
+backend/staticfiles/
+__pycache__/
+*.pyc
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+
+# local / secrets
+.env
+*.env
+.claude/settings.local.json
+.mobile-git-backup/

@@ -1,0 +1,43 @@
+{% extends "admin/base_site.html" %}
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="/admin/">Home</a> › Attendance sheet</div>{% endblock %}
+{% block content %}
+<div class="pf-card">
+  <form method="get" class="pf-filter">
+    <label>Batch
+      <select name="batch" onchange="this.form.submit()">
+        {% for b in batches %}<option value="{{ b.id }}" {% if batch and b.id == batch.id %}selected{% endif %}>{{ b.name }} · {{ b.program }} · {{ b.start_time|time:"h:i A" }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Date <input type="date" name="date" value="{{ day|date:'Y-m-d' }}" onchange="this.form.submit()"></label>
+    <span class="pf-pill green">{{ present }} present</span>
+    <span class="pf-pill red">{{ absent }} absent</span>
+  </form>
+</div>
+
+{% if batch %}
+<form method="post" class="pf-card">
+  {% csrf_token %}
+  <input type="hidden" name="batch" value="{{ batch.id }}">
+  <input type="hidden" name="date" value="{{ day|date:'Y-m-d' }}">
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button type="button" class="pf-btn ghost" onclick="document.querySelectorAll('.r-p').forEach(r=>r.checked=true)">All present</button>
+    <button type="button" class="pf-btn ghost" onclick="document.querySelectorAll('.r-a').forEach(r=>r.checked=true)">All absent</button>
+  </div>
+  <table class="pf-table">
+    <thead><tr><th>Member</th><th>Phone</th><th>Present</th><th>Absent</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td><b>{{ r.m.full_name }}</b><br><small>{{ r.m.goal }}</small></td>
+        <td>{{ r.m.phone }}</td>
+        <td><input class="r-p" type="radio" name="m_{{ r.m.id }}" value="present" {% if r.status != "absent" %}checked{% endif %}></td>
+        <td><input class="r-a" type="radio" name="m_{{ r.m.id }}" value="absent" {% if r.status == "absent" %}checked{% endif %}></td>
+      </tr>
+    {% empty %}<tr><td colspan="4">No members in this batch yet.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+  <label style="display:block;margin:14px 0"><input type="checkbox" name="email_absent" value="1"> Email absentees via Brevo</label>
+  <button class="pf-btn" type="submit">Save attendance</button>
+</form>
+{% endif %}
+{% endblock %}

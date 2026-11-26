@@ -1,0 +1,47 @@
+{% extends "admin/index.html" %}
+{% block content %}
+{% if stats %}
+<div class="pf-stats">
+  <div class="pf-stat hot"><span>Active members</span><b>{{ stats.members }}</b></div>
+  <div class="pf-stat"><span>Batches</span><b>{{ stats.batches }}</b></div>
+  <div class="pf-stat"><span>Present today</span><b>{{ stats.present_today }}</b></div>
+  <div class="pf-stat"><span>Absent today</span><b>{{ stats.absent_today }}</b></div>
+  <div class="pf-stat"><span>Collected this month</span><b>₹{{ stats.collected|floatformat:0 }}</b></div>
+  <div class="pf-stat"><span>Pending dues</span><b>₹{{ stats.pending|floatformat:0 }}</b></div>
+  <div class="pf-stat"><span>Overdue invoices</span><b>{{ stats.overdue }}</b></div>
+</div>
+
+<div class="pf-card pf-quick">
+  <b style="margin-right:8px">Quick actions</b>
+  <a href="/admin/attendance-sheet/">✔ Mark attendance</a>
+  <a href="/admin/gym/payment/?status__exact=pending">₹ Pending payments</a>
+  <a href="/admin/gym/batchmessage/add/">✉ Message a batch</a>
+  <a href="/admin/gym/dietchart/add/">🥗 New diet chart</a>
+  <a href="/admin/gym/reminder/add/">⏰ New reminder</a>
+  <a href="/admin/gym/mediaitem/add/">🎬 Upload media</a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+  <div class="pf-card">
+    <h3 style="margin-top:0">Today's batches</h3>
+    <table class="pf-table">
+      {% for b in batches_today %}
+      <tr><td><b>{{ b.name }}</b><br><small>{{ b.program }} · {{ b.start_time|time:"h:i A" }} · {{ b.trainer }}</small></td>
+          <td>{{ b.p }}/{{ b.n }} in</td>
+          <td><a href="/admin/attendance-sheet/?batch={{ b.id }}">Mark</a></td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  <div class="pf-card">
+    <h3 style="margin-top:0">Overdue payments</h3>
+    <table class="pf-table">
+      {% for p in overdue_list %}
+      <tr><td><b>{{ p.member }}</b><br><small>{{ p.title }}</small></td><td>₹{{ p.amount }}</td><td>{{ p.due_date|date:"d M" }}</td></tr>
+      {% empty %}<tr><td>No overdue payments.</td></tr>{% endfor %}
+    </table>
+  </div>
+</div>
+<br>
+{% endif %}
+{{ block.super }}
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "admin/base.html" %}
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | PulseForge Admin{% endblock %}
+
+{% block dark-mode-vars %}{% endblock %}
+
+{% block extrastyle %}{{ block.super }}
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root, html[data-theme="dark"], html[data-theme="light"] {
+    color-scheme: light;
+    --primary: #FF5A36; --secondary: #1B2340; --accent: #FFB020;
+    --primary-fg: #fff; --body-fg: #1B2340; --body-bg: #FFF8F3; --body-quiet-color: #7A8199;
+    --body-loud-color: #1B2340; --header-color: #fff; --header-branding-color: #fff;
+    --header-bg: #1B2340; --header-link-color: #fff;
+    --breadcrumbs-fg: #7A8199; --breadcrumbs-link-fg: #FF5A36; --breadcrumbs-bg: #FFF1E9;
+    --link-fg: #E04722; --link-hover-color: #1B2340; --link-selected-fg: #FF5A36;
+    --hairline-color: #F1E4DA; --border-color: #F1E4DA;
+    --module-bg: #fff; --module-fg: #1B2340; --darkened-bg: #FFF1E9; --selected-bg: #FFE3D8; --selected-row: #FFF1E9;
+    --button-bg: #FF5A36; --button-hover-bg: #E04722; --default-button-bg: #1B2340; --default-button-hover-bg: #2C3765;
+    --close-button-bg: #7A8199; --object-tools-bg: #1B2340; --object-tools-hover-bg: #FF5A36;
+    --message-success-bg: #E3F7EE; --message-warning-bg: #FFF4DB; --message-error-bg: #FDE7E8;
+    --font-family-primary: Poppins, system-ui, sans-serif;
+  }
+  body { font-family: Poppins, system-ui, sans-serif; }
+  .theme-toggle { display: none !important; }
+  #header { background: linear-gradient(90deg,#1B2340,#2C3765); box-shadow: 0 4px 20px rgba(27,35,64,.15); }
+  #branding h1, #branding h1 a, #site-name a { color: #fff !important; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; font-size: 30px; }
+  #branding h1 span, #branding-title span { color: #FF5A36 !important; }
+  .module { border-radius: 14px; overflow: hidden; box-shadow: 0 6px 24px rgba(255,90,54,.06); }
+  .module h2, .module caption { background: #FF5A36; font-weight: 600; letter-spacing: .5px; }
+  #nav-sidebar .module h2, #nav-sidebar caption { background: #1B2340; }
+  .button, input[type=submit], .submit-row a.deletelink { border-radius: 10px !important; }
+  .pf-card { background:#fff; border:1px solid #F1E4DA; border-radius:16px; padding:18px; margin-bottom:16px; box-shadow:0 6px 24px rgba(255,90,54,.06); }
+  .pf-stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:18px; }
+  .pf-stat { background:#fff; border:1px solid #F1E4DA; border-radius:16px; padding:16px; }
+  .pf-stat b { display:block; font-family:'Bebas Neue'; font-size:34px; letter-spacing:1px; color:#1B2340; }
+  .pf-stat span { color:#7A8199; font-size:12px; text-transform:uppercase; letter-spacing:1px; }
+  .pf-stat.hot { background:linear-gradient(135deg,#FF5A36,#FF8A3D); border:0; }
+  .pf-stat.hot b, .pf-stat.hot span { color:#fff; }
+  .pf-pill { padding:4px 12px; border-radius:20px; font-weight:600; font-size:12px; }
+  .pf-pill.green { background:#E3F7EE; color:#178A61; } .pf-pill.red { background:#FDE7E8; color:#C9343A; }
+  .pf-filter { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  .pf-filter select, .pf-filter input { padding:8px; border-radius:10px; border:1px solid #F1E4DA; }
+  .pf-table { width:100%; } .pf-table td, .pf-table th { padding:10px; }
+  .pf-btn { background:#FF5A36; color:#fff; border:0; padding:10px 20px; border-radius:10px; font:600 14px Poppins; cursor:pointer; }
+  .pf-btn.ghost { background:#FFF1E9; color:#FF5A36; }
+  .pf-quick a { display:inline-block; margin:4px 6px 4px 0; padding:9px 14px; background:#FFF1E9; color:#E04722; border-radius:10px; font-weight:600; }
+</style>
+{% endblock %}
+
+{% block branding %}
+<div id="site-name"><a href="{% url 'admin:index' %}"><h1 id="branding-title" style="margin:0">PULSE<span>FORGE</span> FITNESS · ADMIN</h1></a></div>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

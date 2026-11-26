@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payment status · PulseForge Fitness</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body{margin:0;font-family:Poppins,Arial,sans-serif;background:#FFF8F3;color:#1B2340;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center}
+    .card{background:#fff;border-radius:24px;max-width:360px;width:92%;padding:32px 24px;box-shadow:0 20px 50px rgba(255,90,54,.15)}
+    .icon{width:72px;height:72px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:36px;color:#fff}
+    .ok{background:#22B07D}.wait{background:#FFB020}.bad{background:#E5484D}
+    h1{font-family:'Bebas Neue';letter-spacing:1.5px;font-size:34px;margin:8px 0}
+    p{color:#7A8199}
+    button{margin-top:16px;padding:14px 24px;border:0;border-radius:14px;background:#FF5A36;color:#fff;font:600 15px Poppins;cursor:pointer}
+  </style>
+</head>
+<body>
+<div class="card">
+  {% if p.status == "paid" %}
+    <div class="icon ok">✓</div><h1>Payment successful</h1>
+    <p>₹{{ p.amount }} received for {{ p.title }}. A receipt was emailed to you.</p>
+  {% elif p.status == "failed" %}
+    <div class="icon bad">!</div><h1>Payment failed</h1><p>No money was taken. Please try again from the app.</p>
+  {% else %}
+    <div class="icon wait">…</div><h1>Payment pending</h1><p>We have not received confirmation yet. Pull to refresh in the app.</p>
+  {% endif %}
+  <p style="font-size:12px">Order {{ p.order_id }}</p>
+  <button onclick="window.close(); history.length > 1 && history.back();">Back to app</button>
+</div>
+</body>
+</html>
