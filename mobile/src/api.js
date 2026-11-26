@@ -9,7 +9,9 @@ function backendHost() {
   return hostUri.split(':')[0] || 'localhost';
 }
 
-export const API_URL = `http://${backendHost()}:8000/api`;
+// Deployed backend (Render): set EXPO_PUBLIC_API_URL=https://<your-service>.onrender.com/api in mobile/.env
+// Not set: the local Django server on port 8000 (MySQL).
+export const API_URL = (process.env.EXPO_PUBLIC_API_URL || `http://${backendHost()}:8000/api`).replace(/\/$/, '');
 
 let token = null;
 let onUnauthorized = null;

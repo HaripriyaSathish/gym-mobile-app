@@ -1,0 +1,36 @@
+# Render Blueprint: New + > Blueprint > pick this repo. Secrets marked sync:false are typed in once on Render.
+services:
+  - type: web
+    name: pulseforge-api
+    runtime: python
+    rootDir: backend
+    plan: free
+    region: ohio            # same region as the Neon database (us-east-2) for low latency
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput
+    startCommand: gunicorn gymcore.wsgi:application --workers 2 --timeout 60
+    healthCheckPath: /api/programs/
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.14.2"
+      - key: DEBUG
+        value: "0"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL          # the Neon connection string
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
+      - key: CASHFREE_APP_ID
+        sync: false
+      - key: CASHFREE_SECRET_KEY
+        sync: false
+      - key: CASHFREE_ENV
+        value: sandbox

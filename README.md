@@ -79,3 +79,33 @@ Useful commands:
 
 **Cashfree sandbox testing:** in checkout choose Net Banking, pick any bank, and use the simulator's OTP with SUCCESS.
 Use UPI `testsuccess@gocash`. No real money moves.
+
+## Databases: MySQL locally, Neon in production
+- **Local:** no `DATABASE_URL` in `backend/.env`, so Django uses your local MySQL (unchanged).
+- **Render:** `DATABASE_URL` is set to the Neon PostgreSQL URL, so Django uses Neon.
+- Images and videos are **not** in either database: they live on Cloudinary and the database stores their paths,
+  so the same rows show the same images everywhere.
+
+Copy local MySQL data into Neon again (e.g. after adding demo data locally). Needs `NEON_DATABASE_URL` in `backend/.env`:
+```powershell
+cd "C:\gym mobile app\backend"
+.\venv\Scripts\python manage.py sync_media_cloudinary   # only if you added images locally
+.\venv\Scripts\python manage.py copy_to_neon --replace   # wipes Neon's data and copies everything
+```
+Login sessions, app tokens and phone push tokens are not copied: people just sign in again.
+
+## Deploy the backend on Render
+1. Render dashboard → **New + → Blueprint** → pick this GitHub repo. It reads `render.yaml`.
+2. Fill in the secret values when asked: `DATABASE_URL` (the Neon URL), the `CLOUDINARY_*` keys,
+   `BREVO_*` and `CASHFREE_*` (same values as `backend/.env`). `DJANGO_SECRET_KEY` is generated for you.
+3. Deploy. The build installs packages, collects static files and runs migrations on Neon.
+   API: `https://<service>.onrender.com/api/`, admin: `https://<service>.onrender.com/admin/`.
+
+Point the app at Render by creating `mobile/.env` (git-ignored) and restarting Expo with `--clear`:
+```
+EXPO_PUBLIC_API_URL=https://<service>.onrender.com/api
+```
+Delete that line to go back to your local backend.
+
+> Render's free plan sleeps after ~15 minutes idle (the first request then takes ~30-60 s). While asleep the
+> 5-minute auto-absent loop pauses; it catches up as soon as someone opens the app.
